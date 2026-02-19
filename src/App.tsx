@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { CartProvider } from "@/context/CartContext";
 import Navbar from "@/components/Navbar";
@@ -13,10 +13,11 @@ import Index from "./pages/Index";
 import CatalogPage from "./pages/Catalog";
 import ProductDetailPage from "./pages/ProductDetail";
 import AdminPage from "./pages/Admin";
+import AdminLogin from "./pages/AdminLogin"; // Не забудь создать этот файл!
 import AboutPage from "./pages/About";
 import ContactsPage from "./pages/Contacts";
 import NotFound from "./pages/NotFound";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,12 @@ const ScrollToTop = () => {
 
 const AnimatedRoutes = () => {
   const location = useLocation();
+  
+  // Состояние авторизации: проверяем sessionStorage, чтобы не вылетало при перезагрузке
+  const [isAdmin, setIsAdmin] = useState(
+    sessionStorage.getItem("isAdmin") === "true"
+  );
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -43,7 +50,16 @@ const AnimatedRoutes = () => {
           <Route path="/product/:id" element={<ProductDetailPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contacts" element={<ContactsPage />} />
-          <Route path="/admin" element={<AdminPage />} />
+          
+          {/* Страница входа в админку */}
+          <Route path="/admin-login" element={<AdminLogin setAuth={setIsAdmin} />} />
+          
+          {/* Защищенный роут админки */}
+          <Route 
+            path="/admin" 
+            element={isAdmin ? <AdminPage /> : <Navigate to="/admin-login" replace />} 
+          />
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </motion.div>
