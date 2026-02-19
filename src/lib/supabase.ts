@@ -1,7 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Vercel сам подставит эти значения из настроек, которые ты сделал выше
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// Если ключи потерялись, код об этом прокричит
+if (!supabaseUrl || !supabaseKey) {
+  console.error("❌ SUPABASE_ERROR: Ключи не найдены в import.meta.env!");
+}
+
+export const supabase = createClient(
+  supabaseUrl || '', 
+  supabaseKey || ''
+);
