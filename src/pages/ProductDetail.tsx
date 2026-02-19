@@ -1,14 +1,71 @@
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, ShoppingBag, Heart } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, ShoppingBag, Heart, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { INITIAL_PRODUCTS } from "@/data/products";
+import { type Product } from "@/data/products";
 import { useCart } from "@/context/CartContext";
 import ProductCard from "@/components/ProductCard";
+import { supabase } from "@/lib/supabase";
 
 const ProductDetailPage = () => {
   const { id } = useParams();
-  const product = INITIAL_PRODUCTS.find((p) => p.id === Number(id));
   const { addItem } = useCart();
+  
+  const [product, setProduct] = useState<Product | null>(null);
+  const [related, setRelated] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProductData = async () => {
+      setIsLoading(true);
+      try {
+        // 1. Загружаем основной товар по ID из Supabase
+        const { data, error } = await supabase
+          .from('groomer-shop')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          const formattedProduct = {
+            ...data,
+            img: data.image,
+            desc: data.description
+          };
+          setProduct(formattedProduct);
+
+          // 2. Загружаем похожие товары (той же категории)
+          const { data: relatedData } = await supabase
+            .from('groomer-shop')
+            .select('*')
+            .eq('category', data.category)
+            .neq('id', id)
+            .limit(3);
+
+          if (relatedData) {
+            setRelated(relatedData.map(p => ({ ...p, img: p.image, desc: p.description })));
+          }
+        }
+      } catch (err) {
+        console.error("Ошибка при загрузке товара:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProductData();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="pt-40 min-h-screen flex flex-col items-center justify-center">
+        <Loader2 className="animate-spin text-brand mb-4" size={40} />
+        <p className="text-muted-foreground">Загружаем детали товара...</p>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -20,10 +77,6 @@ const ProductDetailPage = () => {
       </div>
     );
   }
-
-  const related = INITIAL_PRODUCTS.filter(
-    (p) => p.subgroup === product.subgroup && p.id !== product.id
-  ).slice(0, 3);
 
   return (
     <div className="pt-28 pb-24 min-h-screen">
@@ -37,10 +90,10 @@ const ProductDetailPage = () => {
 
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20">
           <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-            className="rounded-5xl overflow-hidden shadow-2xl aspect-square"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="rounded-5xl overflow-hidden shadow-2xl aspect-[4/5] bg-white"
           >
             <img
               src={product.img}
@@ -50,9 +103,9 @@ const ProductDetailPage = () => {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, x: 40 }}
+            initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
             className="flex flex-col justify-center"
           >
             <span className="text-brand heading-display uppercase tracking-[0.15em] text-sm mb-4">
@@ -62,34 +115,30 @@ const ProductDetailPage = () => {
               {product.title}
             </h1>
             <p className="text-3xl font-bold mb-8">
-              {product.price.toLocaleString("ru-RU")} ₽
+              {Number(product.price).toLocaleString("ru-RU")} ₽
             </p>
-            <p className="text-muted-foreground text-lg leading-relaxed mb-10">
-              {product.desc || "Описание товара временно отсутствует, но данный продукт является одним из лучших в нашей коллекции."}
-            </p>
-
-            {product.badge && (
-              <div className="mb-8">
-                <span className="tag-badge text-sm">{product.badge}</span>
-              </div>
-            )}
+            <div className="prose prose-slate mb-10">
+                <p className="text-muted-foreground text-lg leading-relaxed">
+                {product.desc && product.desc !== "EMPTY" ? product.desc : "Описание товара скоро появится. Этот инструмент станет незаменимым помощником в вашей работе."}
+                </p>
+            </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
               <button
                 onClick={() => addItem(product)}
-                className="btn-cta flex items-center justify-center gap-3 flex-1"
+                className="btn-cta flex items-center justify-center gap-3 flex-1 bg-brand text-white py-4 rounded-2xl font-bold hover:shadow-lg transition-all"
               >
                 <ShoppingBag size={20} />
                 В КОРЗИНУ
               </button>
-              <button className="btn-dark flex items-center justify-center gap-3 px-8">
+              <button className="flex items-center justify-center gap-3 px-8 py-4 border border-border rounded-2xl hover:bg-secondary transition-all">
                 <Heart size={20} />
               </button>
             </div>
           </motion.div>
         </div>
 
-        {/* Related */}
+        {/* Related Products */}
         {related.length > 0 && (
           <section className="mt-24">
             <h2 className="text-2xl md:text-3xl heading-display mb-10">Похожие товары</h2>
