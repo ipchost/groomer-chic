@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Plus, Pencil, Trash2, BarChart3, Users, ShoppingBag, TrendingUp, Loader2 } from "lucide-react";
-import { CATEGORIES, type Product } from "@/data/products";
+import { CATEGORIES } from "@/data/products";
+import type { Product } from "@/data/products"; // Импортируем ТОЛЬКО тип
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 
@@ -22,23 +23,32 @@ const AdminPage = () => {
   // 1. ЗАГРУЗКА ТОВАРОВ ИЗ SUPABASE
   const fetchProducts = async () => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from('groomer-shop') // Актуальное название таблицы
-      .select('*')
-      .order('id', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('groomer-shop') 
+        .select('*')
+        .order('id', { ascending: false });
 
-    if (error) {
-      toast({ title: "Ошибка загрузки", description: error.message, variant: "destructive" });
-    } else {
-      // Преобразуем поля базы (image, description) в поля интерфейса (img, desc)
-      const formattedData = (data || []).map(p => ({
-        ...p,
-        img: p.image,
-        desc: p.description
-      }));
-      setProducts(formattedData);
+      // Логируем для отладки (посмотрите в F12 на сайте)
+      console.log("Данные из Supabase:", data);
+      if (error) console.error("Ошибка Supabase:", error);
+
+      if (error) {
+        toast({ title: "Ошибка загрузки", description: error.message, variant: "destructive" });
+      } else if (data) {
+        // Мапим поля image -> img и description -> desc для соответствия интерфейсу Product
+        const formattedData: Product[] = data.map((p: any) => ({
+          ...p,
+          img: p.image || '', 
+          desc: p.description || ''
+        }));
+        setProducts(formattedData);
+      }
+    } catch (e) {
+      console.error("Critical error:", e);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -50,14 +60,13 @@ const AdminPage = () => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     
-    // Подготовка данных СТРОГО под колонки в Supabase
     const productPayload = {
       title: fd.get("title") as string,
       price: Number(fd.get("price")),
       category: fd.get("category") as string,
       subgroup: fd.get("subgroup") as string,
-      image: fd.get("img") as string,        // в базе 'image'
-      description: fd.get("desc") as string, // в базе 'description'
+      image: fd.get("img") as string,        
+      description: fd.get("desc") as string, 
     };
 
     if (editItem) {
@@ -67,7 +76,7 @@ const AdminPage = () => {
         .eq('id', editItem.id);
 
       if (!error) {
-        toast({ title: "Успех", description: "Товар обновлен в базе" });
+        toast({ title: "Успех", description: "Товар обновлен" });
       } else {
         toast({ title: "Ошибка", description: error.message, variant: "destructive" });
       }
@@ -77,13 +86,13 @@ const AdminPage = () => {
         .insert([productPayload]);
 
       if (!error) {
-        toast({ title: "Успех", description: "Товар добавлен в облако" });
+        toast({ title: "Успех", description: "Товар добавлен в базу" });
       } else {
         toast({ title: "Ошибка", description: error.message, variant: "destructive" });
       }
     }
 
-    fetchProducts(); 
+    await fetchProducts(); 
     setEditItem(null);
     setView("list");
   };
@@ -98,7 +107,7 @@ const AdminPage = () => {
       .eq('id', id);
 
     if (!error) {
-      setProducts(products.filter((p) => p.id !== id));
+      setProducts(prev => prev.filter((p) => p.id !== id));
       toast({ title: "Товар удалён", variant: "destructive" });
     } else {
       toast({ title: "Ошибка удаления", description: error.message, variant: "destructive" });
@@ -140,7 +149,8 @@ const AdminPage = () => {
             <div className="bg-card rounded-3xl p-8 border border-border">
               <h3 className="font-bold mb-4">Последние товары в базе</h3>
               <div className="space-y-3">
-                {products.slice(0, 5).map((p) => (
+                {products.length === 0 ? <p className="text-muted-foreground text-sm">База пуста</p> : 
+                products.slice(0, 5).map((p) => (
                   <div key={p.id} className="flex items-center gap-4 py-3 border-b border-border last:border-0">
                     <img src={p.img} alt="" className="w-10 h-10 rounded-lg object-cover" />
                     <span className="font-medium flex-1">{p.title}</span>
