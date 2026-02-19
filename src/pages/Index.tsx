@@ -46,7 +46,7 @@ const HomePage = () => {
       <section className="h-screen relative flex items-center overflow-hidden">
         <div className="absolute inset-0">
           <img src={heroBg} className="w-full h-full object-cover" alt="" />
-          <div className="absolute inset-0 bg-foreground/30" />
+          <div className="absolute inset-0 bg-foreground/10" />
         </div>
         <div className="container relative z-10 flex flex-col items-start text-left ml-4 md:ml-12">
           <motion.h1
