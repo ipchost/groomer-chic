@@ -1,62 +1,68 @@
-import { useState, useMemo, useEffect } from "react"; // Добавили useEffect
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react"; // Добавили лоадер
+import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { CATEGORIES, type Product } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/lib/supabase"; // Импортируем мостик к базе
+import { supabase } from "@/lib/supabase";
 
 const CatalogPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const filterParam = searchParams.get("filter");
   
-  // СОСТОЯНИЯ
-  const [dbProducts, setDbProducts] = useState<Product[]>([]); // Товары из базы
-  const [isLoading, setIsLoading] = useState(true); // Состояние загрузки
+  const [dbProducts, setDbProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<string | null>(filterParam);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("default");
 
-  // 1. ЗАГРУЗКА ДАННЫХ ИЗ SUPABASE
   useEffect(() => {
     const fetchProducts = async () => {
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from('products')
-        .select('*');
+      try {
+        // ИСПРАВЛЕНО: Обращаемся к правильной таблице 'groomer-shop'
+        const { data, error } = await supabase
+          .from('groomer-shop') 
+          .select('*');
 
-      if (error) {
-        console.error("Ошибка загрузки:", error.message);
-      } else {
-        // Преобразуем данные из формата БД в формат нашего интерфейса Product, 
-        // если названия колонок отличаются (например, img -> image)
-        const formattedData = (data || []).map(p => ({
-          ...p,
-          title: p.title || p.name, // На случай если в базе 'name', а в коде 'title'
-          img: p.img || p.image,    // На случай если в базе 'image', а в коде 'img'
-          desc: p.desc || p.description
-        }));
-        setDbProducts(formattedData);
+        if (error) throw error;
+
+        if (data) {
+          const formattedData = data.map(p => ({
+            ...p,
+            img: p.image,      // Маппим image из БД в img для компонента
+            desc: p.description // Маппим description в desc
+          }));
+          setDbProducts(formattedData);
+        }
+      } catch (error: any) {
+        console.error("Ошибка загрузки каталога:", error.message);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     fetchProducts();
   }, []);
 
-  // 2. ФИЛЬТРАЦИЯ И СОРТИРОВКА (теперь используем dbProducts вместо INITIAL_PRODUCTS)
   const products = useMemo(() => {
     let result = [...dbProducts];
 
     if (filter) {
-      result = result.filter((p) => p.category === filter || p.subgroup === filter);
+      // Фильтруем и по категории, и по подгруппе
+      result = result.filter((p) => 
+        (p.category && p.category.toLowerCase() === filter.toLowerCase()) || 
+        (p.subgroup && p.subgroup.toLowerCase() === filter.toLowerCase())
+      );
     }
 
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
-        (p) => p.title.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q)
+        (p) => 
+          p.title.toLowerCase().includes(q) || 
+          (p.desc && p.desc.toLowerCase().includes(q))
       );
     }
 
@@ -86,7 +92,6 @@ const CatalogPage = () => {
           Каталог
         </motion.h1>
 
-        {/* Search & Sort bar */}
         <div className="flex flex-col sm:flex-row gap-4 mb-10">
           <div className="relative flex-1">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -117,7 +122,6 @@ const CatalogPage = () => {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-12">
-          {/* Sidebar */}
           <aside className="w-full lg:w-56 shrink-0">
             <button
               onClick={() => handleFilter(null)}
@@ -153,7 +157,6 @@ const CatalogPage = () => {
             ))}
           </aside>
 
-          {/* Grid */}
           <div className="flex-1">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20">
@@ -162,7 +165,7 @@ const CatalogPage = () => {
               </div>
             ) : products.length === 0 ? (
               <div className="text-center py-20">
-                <p className="text-muted-foreground text-lg">Ничего не найдено</p>
+                <p className="text-muted-foreground text-lg">В этой категории пока нет товаров</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
