@@ -1,20 +1,53 @@
-import { useState, useMemo } from "react";
-import { useSearchParams, Link } from "react-router-dom";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { useState, useMemo, useEffect } from "react"; // Добавили useEffect
+import { useSearchParams } from "react-router-dom";
+import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react"; // Добавили лоадер
 import { motion } from "framer-motion";
-import { INITIAL_PRODUCTS, CATEGORIES, type Product } from "@/data/products";
+import { CATEGORIES, type Product } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/lib/supabase"; // Импортируем мостик к базе
 
 const CatalogPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const filterParam = searchParams.get("filter");
+  
+  // СОСТОЯНИЯ
+  const [dbProducts, setDbProducts] = useState<Product[]>([]); // Товары из базы
+  const [isLoading, setIsLoading] = useState(true); // Состояние загрузки
   const [filter, setFilter] = useState<string | null>(filterParam);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("default");
 
+  // 1. ЗАГРУЗКА ДАННЫХ ИЗ SUPABASE
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('products')
+        .select('*');
+
+      if (error) {
+        console.error("Ошибка загрузки:", error.message);
+      } else {
+        // Преобразуем данные из формата БД в формат нашего интерфейса Product, 
+        // если названия колонок отличаются (например, img -> image)
+        const formattedData = (data || []).map(p => ({
+          ...p,
+          title: p.title || p.name, // На случай если в базе 'name', а в коде 'title'
+          img: p.img || p.image,    // На случай если в базе 'image', а в коде 'img'
+          desc: p.desc || p.description
+        }));
+        setDbProducts(formattedData);
+      }
+      setIsLoading(false);
+    };
+
+    fetchProducts();
+  }, []);
+
+  // 2. ФИЛЬТРАЦИЯ И СОРТИРОВКА (теперь используем dbProducts вместо INITIAL_PRODUCTS)
   const products = useMemo(() => {
-    let result = [...INITIAL_PRODUCTS];
+    let result = [...dbProducts];
 
     if (filter) {
       result = result.filter((p) => p.category === filter || p.subgroup === filter);
@@ -31,7 +64,7 @@ const CatalogPage = () => {
     if (sort === "price-desc") result.sort((a, b) => b.price - a.price);
 
     return result;
-  }, [filter, search, sort]);
+  }, [dbProducts, filter, search, sort]);
 
   const handleFilter = (val: string | null) => {
     setFilter(val);
@@ -122,7 +155,12 @@ const CatalogPage = () => {
 
           {/* Grid */}
           <div className="flex-1">
-            {products.length === 0 ? (
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <Loader2 className="animate-spin text-primary mb-4" size={40} />
+                <p className="text-muted-foreground">Загрузка каталога...</p>
+              </div>
+            ) : products.length === 0 ? (
               <div className="text-center py-20">
                 <p className="text-muted-foreground text-lg">Ничего не найдено</p>
               </div>
