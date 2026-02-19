@@ -1,9 +1,11 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ShieldCheck, Truck, Heart } from "lucide-react";
+import { ShieldCheck, Truck, Heart, Loader2 } from "lucide-react";
 import heroBg from "@/assets/hero-bg1.png";
 import ProductCard from "@/components/ProductCard";
-import { INITIAL_PRODUCTS } from "@/data/products";
+import { type Product } from "@/data/products";
+import { supabase } from "@/lib/supabase";
 
 const advantages = [
   { title: "Качество", desc: "Только проверенные бренды и сертифицированные материалы", icon: ShieldCheck },
@@ -12,7 +14,31 @@ const advantages = [
 ];
 
 const HomePage = () => {
-  const featured = INITIAL_PRODUCTS.slice(0, 3);
+  const [featured, setFeatured] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeaturedProducts = async () => {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('groomer-shop')
+        .select('*')
+        .order('id', { ascending: false }) // Сначала новые
+        .limit(3);
+
+      if (!error && data) {
+        const formattedData = data.map(p => ({
+          ...p,
+          img: p.image,
+          desc: p.description
+        }));
+        setFeatured(formattedData);
+      }
+      setIsLoading(false);
+    };
+
+    fetchFeaturedProducts();
+  }, []);
 
   return (
     <div>
@@ -24,15 +50,14 @@ const HomePage = () => {
         </div>
         <div className="container relative z-10 flex flex-col items-start text-left ml-4 md:ml-12">
           <motion.h1
-  initial={{ opacity: 0, y: 40 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.8 }}
-  /* Я удалил text-primary-foreground из строки ниже, чтобы он не мешал */
-  className="text-5xl md:text-7xl lg:text-8xl heading-display mb-6"
->
-  <span className="text-[#373b3e]">СТИЛЬ</span>{" "}
-  <span className="text-[#9b1c1c]">ГРУМЕРА</span>
-</motion.h1>
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-5xl md:text-7xl lg:text-8xl heading-display mb-6"
+          >
+            <span className="text-[#373b3e]">СТИЛЬ</span>{" "}
+            <span className="text-[#9b1c1c]">ГРУМЕРА</span>
+          </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -41,13 +66,6 @@ const HomePage = () => {
           >
             Всё для идеального ухода. Современные инструменты и одежда премиум-класса для профессионалов.
           </motion.p>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
-          
-          </motion.div>
         </div>
       </section>
 
@@ -92,11 +110,22 @@ const HomePage = () => {
               Все товары →
             </Link>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featured.map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} />
-            ))}
-          </div>
+
+          {isLoading ? (
+            <div className="flex justify-center py-20">
+              <Loader2 className="animate-spin text-primary" size={40} />
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {featured.length > 0 ? (
+                featured.map((p, i) => (
+                  <ProductCard key={p.id} product={p} index={i} />
+                ))
+              ) : (
+                <p className="text-muted-foreground col-span-full text-center">Товары скоро появятся...</p>
+              )}
+            </div>
+          )}
         </div>
       </section>
     </div>
