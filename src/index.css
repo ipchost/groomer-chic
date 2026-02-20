@@ -6,82 +6,66 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
+    /* Основная палитра Pirania Brand */
+    --background: 0 0% 0%; /* Чистый черный */
+    --foreground: 0 0% 100%; /* Чистый белый */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 173 58% 39%;
+    --primary: 0 84% 44%; /* Фирменный красный */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 20% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 63%;
 
-    --accent: 25 95% 53%;
+    --accent: 0 84% 44%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 173 58% 39%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 0 84% 44%;
 
-    --radius: 1rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 173 58% 39%;
+    /* Sidebar адаптирован под темную тему */
+    --sidebar-background: 0 0% 3%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 0 84% 44%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 173 40% 95%;
-    --sidebar-accent-foreground: 173 58% 30%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 173 58% 39%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 12%;
+    --sidebar-ring: 0 84% 44%;
 
     /* Custom tokens */
-    --teal-glow: 173 58% 50%;
-    --mint: 168 40% 95%;
-    --orange-cta: 25 95% 53%;
-    --orange-cta-hover: 25 95% 45%;
-    --slate-dark: 222 47% 11%;
-    --glass-bg: 0 0% 100% / 0.7;
+    --teal-glow: 0 84% 44%;
+    --mint: 0 0% 8%;
+    --orange-cta: 0 84% 44%;
+    --orange-cta-hover: 0 84% 35%;
+    --slate-dark: 0 0% 10%;
+    --glass-bg: 0 0% 0% / 0.8;
   }
 
+  /* Дублируем для .dark, чтобы при переключении ничего не сломалось */
   .dark {
-    --background: 222 47% 5%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 8%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 173 58% 45%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 25 95% 53%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 173 58% 45%;
-    --sidebar-background: 222 47% 8%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 173 58% 45%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 173 58% 45%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 100%;
+    --primary: 0 84% 44%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 0 84% 44%;
   }
 }
 
@@ -98,44 +82,47 @@
 @layer components {
   .glass {
     background: hsla(var(--glass-bg));
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid hsla(0, 0%, 100%, 0.1);
   }
 
   .card-premium {
-    @apply bg-card rounded-[2rem] overflow-hidden border border-border shadow-sm transition-all duration-500;
+    /* Ozon Style: скругления и легкий бордер */
+    @apply bg-card rounded-2xl overflow-hidden border border-white/5 shadow-lg transition-all duration-500;
   }
   .card-premium:hover {
-    @apply shadow-2xl;
-    transform: translateY(-4px);
+    @apply border-primary/50;
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px -20px rgba(188, 18, 18, 0.4);
   }
 
   .btn-primary {
-    @apply bg-primary text-primary-foreground px-8 py-4 rounded-full font-bold transition-all duration-300;
+    @apply bg-primary text-primary-foreground px-8 py-4 rounded-full font-black uppercase tracking-widest transition-all duration-300;
   }
   .btn-primary:hover {
-    @apply scale-105;
-    box-shadow: 0 20px 40px -12px hsl(var(--primary) / 0.4);
+    @apply bg-white text-black scale-105;
   }
 
   .btn-cta {
-    @apply px-10 py-5 rounded-full font-black text-lg transition-all duration-300;
+    @apply px-10 py-5 rounded-full font-black text-lg uppercase tracking-tighter transition-all duration-300;
     background: hsl(var(--orange-cta));
-    color: hsl(var(--primary-foreground));
+    color: white;
   }
   .btn-cta:hover {
-    background: hsl(var(--orange-cta-hover));
+    background: white;
+    color: black;
     @apply scale-105;
-    box-shadow: 0 20px 40px -12px hsl(var(--orange-cta) / 0.5);
+    box-shadow: 0 0 30px hsla(var(--primary), 0.5);
   }
 
   .btn-dark {
-    @apply px-8 py-4 rounded-full font-bold transition-all duration-300;
-    background: hsl(var(--slate-dark));
-    color: hsl(var(--primary-foreground));
+    @apply px-8 py-4 rounded-full font-bold transition-all duration-300 border border-white/20;
+    background: transparent;
+    color: white;
   }
   .btn-dark:hover {
-    @apply bg-primary text-primary-foreground;
+    @apply bg-white text-black border-white;
   }
 
   .section-padding {
@@ -143,33 +130,15 @@
   }
 
   .heading-display {
-    @apply font-black tracking-tighter;
+    @apply font-black tracking-tighter uppercase;
   }
 
   .text-brand {
     color: hsl(var(--primary));
   }
 
-  .bg-mint {
-    background: hsl(var(--mint));
-  }
-
-  .social-fab {
-    @apply w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 text-primary-foreground;
-  }
-  .social-fab:hover {
-    @apply scale-110;
-  }
-
-  .mega-menu-panel {
-    @apply absolute top-full pt-6 opacity-0 invisible translate-y-2 transition-all duration-300;
-  }
-  .group:hover .mega-menu-panel {
-    @apply opacity-100 visible translate-y-0;
-  }
-
   .tag-badge {
-    @apply text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider bg-primary text-primary-foreground;
+    @apply text-[10px] font-bold px-3 py-1 rounded-sm uppercase tracking-wider bg-primary text-primary-foreground;
   }
 }
 
@@ -180,15 +149,6 @@
   }
   .animate-float {
     animation: float 3s ease-in-out infinite;
-  }
-
-  @keyframes pulse-ring {
-    0% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.5); }
-    70% { box-shadow: 0 0 0 12px hsl(var(--primary) / 0); }
-    100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0); }
-  }
-  .animate-pulse-ring {
-    animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
   .scrollbar-hide::-webkit-scrollbar { display: none; }
